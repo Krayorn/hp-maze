@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Harry Crotter</title>
+        <!-- <script src="./aframe.js"></script> -->
+        <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
+    </head>
+    <body>
+        <a-scene move-click >
+            <a-camera>
+                <a-cursor>
+                </a-cursor>
+            </a-camera>
+        </a-scene>
+        <script>
+
+            const request = new XMLHttpRequest()
+            request.open('GET', 'map.txt', false)
+            request.send()
+            const map = request.responseText.split('\n')
+
+            const scene = document.querySelector('a-scene')
+            const camera = document.querySelector('a-camera')
+
+            let mousedownID = -1  //Global ID of mouse down interval
+            function mousedown(event) {
+            if (mousedownID==-1)  //Prevent multimple loops!
+                mousedownID = setInterval(whilemousedown, 50 /*execute every 100ms*/)
+            }
+            function mouseup(event) {
+                if(mousedownID!=-1) {  //Only stop if exists
+                    clearInterval(mousedownID)
+                    mousedownID=-1
+                }
+            }
+            function whilemousedown() {
+                const currentPos = camera.getAttribute('position')
+                const currentRot = camera.getAttribute('rotation')
+                camera.setAttribute('position', {
+                    x: currentPos.x + 0.1 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
+                    y: currentPos.y,
+                    z: currentPos.z + 0.1 * Math.cos((currentRot.y -180) * Math.PI / 180.0),
+                })
+            }
+            scene.addEventListener("mousedown", mousedown)
+            scene.addEventListener("touchstart", mousedown)
+            scene.addEventListener("mouseup", mouseup)
+            scene.addEventListener("touchend", mouseup)
+            scene.addEventListener("mouseout", mouseup)
+
+            const startingAllowed = []
+
+            for (i in map) {
+                const line = map[i].split('')
+                for(j in line) {
+                    const elem = document.createElement('a-box')
+                    switch (line[j]) {
+                        case '#':
+                            elem.setAttribute('position', i + ' 2 ' + j)
+                            elem.setAttribute('height', 4)
+                            elem.setAttribute('color', 'green')
+                            break
+                        case "0":
+                            startingAllowed.push([i, j])
+                        default:
+                            elem.setAttribute('position', i + ' 0.5 ' + j)
+                            elem.setAttribute('color', 'red')
+                            break
+                    }
+                    scene.appendChild(elem)
+                }
+            }
+            camera.setAttribute('position', startingAllowed[0][0] + ' 2 ' + startingAllowed[0][1])
+        </script>
+    </body>
+</html>
