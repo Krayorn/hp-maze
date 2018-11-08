@@ -8,9 +8,13 @@
     </head>
     <body>
         <a-scene move-click >
-            <a-assets>
-                    <img id="groundTexture" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgUXylsQxXXaihqU0AiO8uS6h6t-XS64jqwLGhxhw_WMI1WqR_2A">
-            </a-assets>
+                <a-assets>
+                    <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879%22%3E" />
+                    <img id="groundTexture" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrjnnshR5k8UWlbPeXt3iNGTNmagNqH-fF1zCvsdEn8Nh2c0yu%22%3E" />
+                    <img id="spell" src="https://a.wattpad.com/cover/7668857-288-k560123.jpg%22%3E" />
+                    <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Funtitled.147.jpg?1541677826300%22%3E"/>
+                    <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fcup.obj?1541677534435%22%3E"></a-asset-item>
+                </a-assets>
             <a-camera>
                 <a-cursor>
                 </a-cursor>
@@ -62,10 +66,10 @@
 
                 switch (currentMapContent) {
                     case 'x':
-                        startNewGame('you died')
+                        startNewGame()
                         return false
                     case '1':
-                        startNewGame('You won')
+                        startNewGame()
                         return false
                 }
 
@@ -83,9 +87,9 @@
             scene.addEventListener("touchend", mouseup)
             scene.addEventListener("mouseout", mouseup)
 
-            function startNewGame(message = '') {
-                const startingPosition = startingAllowed[0][0] + ' 0 ' + startingAllowed[0][1]
-                camera.setAttribute('position', startingPosition)
+            function startNewGame(first = false) {
+                const startingPos = startingAllowed[Math.floor(Math.random()*startingAllowed.length)];
+                camera.setAttribute('position', startingPos[0] + (first ? ' 0 ' : ' 1 ')  + startingPos[1])
             }
 
             function createWall(type, i, j) {
@@ -120,7 +124,7 @@
                 }
 
                 wall.setAttribute('height', 4)
-                wall.setAttribute('color', 'green')
+                wall.setAttribute('src', '#wallTexture')
 
                 scene.appendChild(wall)
             }
@@ -135,7 +139,7 @@
                     elem.setAttribute('position', i + ' 0.1 ' + j)
                     switch (map[i][j]) {
                         case "1":
-                            elem.setAttribute('color', 'blue')
+                            elem.setAttribute('src', '#cup')
                             scene.appendChild(elem)
                             break
                         case "x":
@@ -154,14 +158,14 @@
                 }
             }
             const ground = document.createElement('a-box')
-            ground.setAttribute('src', '#groundTexture')
+            ground.setAttribute('src', 'black')
             ground.setAttribute('height', 0.1)
             ground.setAttribute('position', ((map.length - 1) / 2 - 0.5) + ' 0 ' + ((map.length - 1) / 2 - 0.5) )
             ground.setAttribute('width', (map.length - 1))
             ground.setAttribute('depth', (map.length - 1))
 
             scene.appendChild(ground)
-            startNewGame('Good Luck')
+            startNewGame(true)
         </script>
     </body>
 </html>
