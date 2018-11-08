@@ -8,6 +8,9 @@
     </head>
     <body>
         <a-scene move-click >
+            <a-assets>
+                    <img id="groundTexture" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgUXylsQxXXaihqU0AiO8uS6h6t-XS64jqwLGhxhw_WMI1WqR_2A">
+            </a-assets>
             <a-camera>
                 <a-cursor>
                 </a-cursor>
@@ -18,6 +21,12 @@
             request.open('GET', 'map.txt', false)
             request.send()
             const map = request.responseText.split('\n')
+
+            const requestConfig = new XMLHttpRequest()
+            requestConfig.open('GET', 'config.json', false)
+            requestConfig.send()
+            const config = JSON.parse(requestConfig.responseText)
+            console.log(config)
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
@@ -38,17 +47,28 @@
             function whilemousedown() {
                 const currentPos = camera.getAttribute('position')
                 const currentRot = camera.getAttribute('rotation')
-                const newPos = {
+                const futurePos = {
                     x: currentPos.x + 0.2 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
                     y: currentPos.y,
                     z: currentPos.z + 0.2 * Math.cos((currentRot.y -180) * Math.PI / 180.0),
                 }
 
-                mapContent = map[Math.round(newPos.x)][Math.round(newPos.z)]
+                nextMapContent = map[Math.round(futurePos.x)][Math.round(futurePos.z)]
+                currentMapContent = map[Math.round(currentPos.x)][Math.round(currentPos.z)]
 
-                if (mapContent == "#") {
+                if (nextMapContent == '#') {
                     return false
                 }
+
+                switch (currentMapContent) {
+                    case 'x':
+                        startNewGame('you died')
+                        return false
+                    case '1':
+                        startNewGame('You won')
+                        return false
+                }
+
 
                 camera.setAttribute('position', {
                     x: currentPos.x + 0.1 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
@@ -63,34 +83,85 @@
             scene.addEventListener("touchend", mouseup)
             scene.addEventListener("mouseout", mouseup)
 
+            function startNewGame(message = '') {
+                const startingPosition = startingAllowed[0][0] + ' 0 ' + startingAllowed[0][1]
+                camera.setAttribute('position', startingPosition)
+                console.log(message)
+                // const myText = document.createElement('a-text')
+                // myText.setAttribute('id', 'text')
+                // myText.setAttribute('value', message)
+                // myText.setAttribute('color', 'blue')
+                // myText.setAttribute('position', startingAllowed[0][0] + ' 2 ' + (startingAllowed[0][1] - 1))
+
+                // const text = document.querySelector('#text')
+                // if(text){
+                //     scene.removeChild(text)
+                // }
+                // scene.appendChild(myText)
+            }
+
             const startingAllowed = []
 
             for (i in map) {
                 map[i] = map[i].split('')
                 for(j in map[i]) {
                     const elem = document.createElement('a-box')
+                    elem.setAttribute('height', 0.1)
+                    elem.setAttribute('position', i + ' 0.1 ' + j)
                     switch (map[i][j]) {
-                        case '#':
-                            elem.setAttribute('position', i + ' 2 ' + j)
-                            elem.setAttribute('height', 4)
-                            elem.setAttribute('color', 'green')
-                            break
                         case "1":
-                            elem.setAttribute('position', i + ' 0.5 ' + j)
                             elem.setAttribute('color', 'blue')
+                            scene.appendChild(elem)
+                            break
+                        case "x":
+                            elem.setAttribute('color', 'yellow')
+                            scene.appendChild(elem)
                             break
                         case "0":
                             startingAllowed.push([i, j])
-                        default:
-                            elem.setAttribute('position', i + ' 0.5 ' + j)
-                            elem.setAttribute('color', 'red')
                             break
                     }
-                    scene.appendChild(elem)
+
+
+                    if (map[i][j] === '#') {
+                        const wall = document.createElement('a-box')
+                        wall.setAttribute('position', i + ' 2 ' + j)
+                        wall.setAttribute('height', 4)
+                        wall.setAttribute('color', 'green')
+
+                        if(config[i+'-'+j]) {
+                            const params = config[i+'-'+j]
+                            if(params.key == "moving") {
+                                const x = (params.axe == 'x' ? params.operator == '+' ? i + params.dist : i - params.dist : i).toString()
+                                const z = (params.axe == 'z' ? params.operator == '+' ? parseInt(j) + params.dist : parseInt(j) - params.dist : parseInt(j)).toString()
+                                console.log(x, z, j, params)
+                                const anim = document.createElement('a-animation')
+                                anim.setAttribute('dur', '2000')
+                                anim.setAttribute('attribute', 'position')
+                                anim.setAttribute('id', 'anim' + i + '-' + j)
+                                anim.setAttribute('from', i + ' 2 ' + j)
+                                anim.setAttribute('to', x + ' 2 ' + z)
+                                anim.setAttribute('repeat', 'indefinite')
+                                anim.setAttribute('direction', 'alternate')
+                                anim.setAttribute('delay', '1000')
+
+                                wall.appendChild(anim)
+                            }
+                        }
+
+                        scene.appendChild(wall)
+                    }
                 }
             }
+            const ground = document.createElement('a-box')
+            ground.setAttribute('src', '#groundTexture')
+            ground.setAttribute('height', 0.1)
+            ground.setAttribute('position', ((map.length - 1) / 2 - 0.5) + ' 0 ' + ((map.length - 1) / 2 - 0.5) )
+            ground.setAttribute('width', (map.length - 1))
+            ground.setAttribute('depth', (map.length - 1))
 
-            camera.setAttribute('position', startingAllowed[0][0] + ' 2 ' + startingAllowed[0][1])
+            scene.appendChild(ground)
+            startNewGame('Good Luck')
         </script>
     </body>
 </html>

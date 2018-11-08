@@ -1,0 +1,8 @@
+{
+    "20-9": {
+        "key": "moving",
+        "dist": 4,
+        "axe": "z",
+        "operator": "+"
+    }
+}
