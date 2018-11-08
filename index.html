@@ -14,7 +14,6 @@
             </a-camera>
         </a-scene>
         <script>
-
             const request = new XMLHttpRequest()
             request.open('GET', 'map.txt', false)
             request.send()
@@ -28,21 +27,36 @@
             if (mousedownID==-1)  //Prevent multimple loops!
                 mousedownID = setInterval(whilemousedown, 50 /*execute every 100ms*/)
             }
+
             function mouseup(event) {
                 if(mousedownID!=-1) {  //Only stop if exists
                     clearInterval(mousedownID)
                     mousedownID=-1
                 }
             }
+
             function whilemousedown() {
                 const currentPos = camera.getAttribute('position')
                 const currentRot = camera.getAttribute('rotation')
+                const newPos = {
+                    x: currentPos.x + 0.2 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
+                    y: currentPos.y,
+                    z: currentPos.z + 0.2 * Math.cos((currentRot.y -180) * Math.PI / 180.0),
+                }
+
+                mapContent = map[Math.round(newPos.x)][Math.round(newPos.z)]
+
+                if (mapContent == "#") {
+                    return false
+                }
+
                 camera.setAttribute('position', {
                     x: currentPos.x + 0.1 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
                     y: currentPos.y,
                     z: currentPos.z + 0.1 * Math.cos((currentRot.y -180) * Math.PI / 180.0),
                 })
             }
+
             scene.addEventListener("mousedown", mousedown)
             scene.addEventListener("touchstart", mousedown)
             scene.addEventListener("mouseup", mouseup)
@@ -52,10 +66,10 @@
             const startingAllowed = []
 
             for (i in map) {
-                const line = map[i].split('')
-                for(j in line) {
+                map[i] = map[i].split('')
+                for(j in map[i]) {
                     const elem = document.createElement('a-box')
-                    switch (line[j]) {
+                    switch (map[i][j]) {
                         case '#':
                             elem.setAttribute('position', i + ' 2 ' + j)
                             elem.setAttribute('height', 4)
@@ -71,6 +85,7 @@
                     scene.appendChild(elem)
                 }
             }
+
             camera.setAttribute('position', startingAllowed[0][0] + ' 2 ' + startingAllowed[0][1])
         </script>
     </body>
