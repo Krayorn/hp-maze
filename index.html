@@ -22,23 +22,23 @@
             request.send()
             const map = request.responseText.split('\n')
 
-            const requestConfig = new XMLHttpRequest()
-            requestConfig.open('GET', 'config.json', false)
-            requestConfig.send()
-            const config = JSON.parse(requestConfig.responseText)
-            console.log(config)
+            // const requestConfig = new XMLHttpRequest()
+            // requestConfig.open('GET', 'config.json', false)
+            // requestConfig.send()
+            // const config = JSON.parse(requestConfig.responseText)
+            // console.log(config)
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
 
-            let mousedownID = -1  //Global ID of mouse down interval
+            let mousedownID = -1
             function mousedown(event) {
-            if (mousedownID==-1)  //Prevent multimple loops!
+            if (mousedownID==-1)
                 mousedownID = setInterval(whilemousedown, 50 /*execute every 100ms*/)
             }
 
             function mouseup(event) {
-                if(mousedownID!=-1) {  //Only stop if exists
+                if(mousedownID!=-1) {
                     clearInterval(mousedownID)
                     mousedownID=-1
                 }
@@ -86,18 +86,43 @@
             function startNewGame(message = '') {
                 const startingPosition = startingAllowed[0][0] + ' 0 ' + startingAllowed[0][1]
                 camera.setAttribute('position', startingPosition)
-                console.log(message)
-                // const myText = document.createElement('a-text')
-                // myText.setAttribute('id', 'text')
-                // myText.setAttribute('value', message)
-                // myText.setAttribute('color', 'blue')
-                // myText.setAttribute('position', startingAllowed[0][0] + ' 2 ' + (startingAllowed[0][1] - 1))
+            }
 
-                // const text = document.querySelector('#text')
-                // if(text){
-                //     scene.removeChild(text)
-                // }
-                // scene.appendChild(myText)
+            function createWall(type, i, j) {
+
+                const wall = document.createElement('a-box')
+
+                if(type == 'o' || type == 'g') {
+                    const anim = document.createElement('a-animation')
+                    anim.setAttribute('dur', '2000')
+                    anim.setAttribute('attribute', 'position')
+                    anim.setAttribute('id', 'anim' + i + '-' + j)
+                    anim.setAttribute('repeat', 'indefinite')
+                    anim.setAttribute('direction', 'alternate')
+                    anim.setAttribute('delay', '2000')
+
+
+
+                    if (type == 'g') {
+                        anim.setAttribute('from', i + ' -2 ' + j)
+                        anim.setAttribute('to', i + ' 2 ' + j)
+                    } else {
+                        anim.setAttribute('from', i + ' 2 ' + j)
+                        anim.setAttribute('to', i + ' -2 ' + j)
+                    }
+                    wall.appendChild(anim)
+                }
+
+                if(type == 'g') {
+                    wall.setAttribute('position', i + ' -2 ' + j)
+                } else {
+                    wall.setAttribute('position', i + ' 2 ' + j)
+                }
+
+                wall.setAttribute('height', 4)
+                wall.setAttribute('color', 'green')
+
+                scene.appendChild(wall)
             }
 
             const startingAllowed = []
@@ -120,36 +145,11 @@
                         case "0":
                             startingAllowed.push([i, j])
                             break
-                    }
-
-
-                    if (map[i][j] === '#') {
-                        const wall = document.createElement('a-box')
-                        wall.setAttribute('position', i + ' 2 ' + j)
-                        wall.setAttribute('height', 4)
-                        wall.setAttribute('color', 'green')
-
-                        if(config[i+'-'+j]) {
-                            const params = config[i+'-'+j]
-                            if(params.key == "moving") {
-                                const x = (params.axe == 'x' ? params.operator == '+' ? i + params.dist : i - params.dist : i).toString()
-                                const z = (params.axe == 'z' ? params.operator == '+' ? parseInt(j) + params.dist : parseInt(j) - params.dist : parseInt(j)).toString()
-                                console.log(x, z, j, params)
-                                const anim = document.createElement('a-animation')
-                                anim.setAttribute('dur', '2000')
-                                anim.setAttribute('attribute', 'position')
-                                anim.setAttribute('id', 'anim' + i + '-' + j)
-                                anim.setAttribute('from', i + ' 2 ' + j)
-                                anim.setAttribute('to', x + ' 2 ' + z)
-                                anim.setAttribute('repeat', 'indefinite')
-                                anim.setAttribute('direction', 'alternate')
-                                anim.setAttribute('delay', '1000')
-
-                                wall.appendChild(anim)
-                            }
-                        }
-
-                        scene.appendChild(wall)
+                        case 'o':
+                        case '#':
+                        case 'g':
+                            createWall(map[i][j], i, j)
+                            break
                     }
                 }
             }
