@@ -8,13 +8,13 @@
     </head>
     <body>
         <a-scene move-click >
-                <a-assets>
-                    <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftoa-heftiba-340865-unsplash.jpg?1541689940143" />
-                    <img id="groundTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879" />
-                    <img id="spell" src="https://a.wattpad.com/cover/7668857-288-k560123.jpg%22%3E" />
-                    <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Funtitled.147.jpg?1541677826300%22%3E"/>
-                    <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fcup.obj?1541677534435%22%3E"></a-asset-item>
-                </a-assets>
+            <a-assets>
+                <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftoa-heftiba-340865-unsplash.jpg?1541689940143" />
+                <img id="groundTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879" />
+                <img id="spell" src="https://a.wattpad.com/cover/7668857-288-k560123.jpg%22%3E" />
+                <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Funtitled.147.jpg?1541677826300%22%3E"/>
+                <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fcup.obj?1541677534435%22%3E"></a-asset-item>
+            </a-assets>
             <a-camera>
                 <a-cursor>
                 </a-cursor>
@@ -25,7 +25,7 @@
             request.open('GET', 'map.txt', false)
             request.send()
             const map = request.responseText.split('\n')
-            let movement = true
+            let movement = false
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
@@ -51,7 +51,7 @@
 
             function inferio(x, z) {
                 let toRemove
-                console.log(x, z, map)
+
                 if (map[x + 1][z] == '#') {
                     toRemove=[x + 1, z]
                 } else if (map[x -1][z] == '#') {
@@ -61,11 +61,14 @@
                 } else if(map[x][z - 1] == '#' ) {
                     toRemove=[x, z - 1]
                 }
+
                 map[toRemove[0]][toRemove[1]] = '*'
-                console.log('#p'+toRemove[0]+'_'+toRemove[1])
                 const box = document.querySelector('#p'+toRemove[0]+'_'+toRemove[1])
-                console.log(box)
-                scene.removeChild(box)
+                const anim = document.createElement('a-animation')
+                anim.setAttribute('dur', '2000')
+                anim.setAttribute('attribute', 'position')
+                anim.setAttribute('to', toRemove[0] + ' -2 ' + toRemove[1])
+                box.appendChild(anim)
             }
 
             let mousedownID = -1
@@ -97,7 +100,7 @@
                 nextMapContent = map[Math.round(futurePos.x)][Math.round(futurePos.z)]
                 currentMapContent = map[Math.round(currentPos.x)][Math.round(currentPos.z)]
 
-                if (nextMapContent == '#') {
+                if (nextMapContent == '#' || nextMapContent.startsWith('t')) {
                     return false
                 }
 
@@ -145,15 +148,22 @@
                     anim.setAttribute('direction', 'alternate')
                     anim.setAttribute('delay', '2000')
 
-
-
                     if (type == 'g') {
                         anim.setAttribute('from', i + ' -2 ' + j)
                         anim.setAttribute('to', i + ' 2 ' + j)
+                        map[i][j] = '#'
                     } else {
                         anim.setAttribute('from', i + ' 2 ' + j)
                         anim.setAttribute('to', i + ' -2 ' + j)
+                        map[i][j] = '*'
                     }
+                    setInterval(() => {
+                        if (map[i][j] == '*' || map[i][j] == '#') {
+                            map[i][j] = 't' + map[i][j]
+                        } else {
+                            map[i][j] = map[i][j] == 't#' ? "*" : "#"
+                        }
+                    }, 2000)
                     wall.appendChild(anim)
                 }
 
@@ -203,6 +213,7 @@
                     }
                 }
             }
+
             const ground = document.createElement('a-box')
             ground.setAttribute('src', '#groundTexture')
             ground.setAttribute('height', 0.1)
@@ -212,6 +223,7 @@
 
             scene.appendChild(ground)
             startNewGame(true)
+            movement = true
         </script>
     </body>
 </html>
