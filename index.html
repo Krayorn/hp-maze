@@ -9,8 +9,8 @@
     <body>
         <a-scene move-click >
                 <a-assets>
-                    <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879%22%3E" />
-                    <img id="groundTexture" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrjnnshR5k8UWlbPeXt3iNGTNmagNqH-fF1zCvsdEn8Nh2c0yu%22%3E" />
+                    <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftoa-heftiba-340865-unsplash.jpg?1541689940143" />
+                    <img id="groundTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879" />
                     <img id="spell" src="https://a.wattpad.com/cover/7668857-288-k560123.jpg%22%3E" />
                     <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Funtitled.147.jpg?1541677826300%22%3E"/>
                     <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fcup.obj?1541677534435%22%3E"></a-asset-item>
@@ -25,20 +25,53 @@
             request.open('GET', 'map.txt', false)
             request.send()
             const map = request.responseText.split('\n')
-
-            // const requestConfig = new XMLHttpRequest()
-            // requestConfig.open('GET', 'config.json', false)
-            // requestConfig.send()
-            // const config = JSON.parse(requestConfig.responseText)
-            // console.log(config)
+            let movement = true
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
 
+            function wingardiumLeviosa(x, z) {
+                const anim = document.createElement('a-animation')
+                anim.setAttribute('dur', '1000')
+                anim.setAttribute('to', x + ' 7 ' + z)
+                anim.setAttribute('attribute', 'position')
+
+                camera.appendChild(anim)
+
+                movement = false
+
+                setTimeout(() => {
+                    const returnAnim = document.createElement('a-animation')
+                    returnAnim.setAttribute('to', x + ' 1 ' + z)
+                    returnAnim.setAttribute('attribute', 'position')
+                    camera.appendChild(returnAnim)
+                    movement = true
+                }, 3000);
+            }
+
+            function inferio(x, z) {
+                let toRemove
+                console.log(x, z, map)
+                if (map[x + 1][z] == '#') {
+                    toRemove=[x + 1, z]
+                } else if (map[x -1][z] == '#') {
+                    toRemove=[x - 1, z]
+                } else if (map[x][z + 1] == '#') {
+                    toRemove=[x, z + 1]
+                } else if(map[x][z - 1] == '#' ) {
+                    toRemove=[x, z - 1]
+                }
+                map[toRemove[0]][toRemove[1]] = '*'
+                console.log('#p'+toRemove[0]+'_'+toRemove[1])
+                const box = document.querySelector('#p'+toRemove[0]+'_'+toRemove[1])
+                console.log(box)
+                scene.removeChild(box)
+            }
+
             let mousedownID = -1
             function mousedown(event) {
-            if (mousedownID==-1)
-                mousedownID = setInterval(whilemousedown, 50 /*execute every 100ms*/)
+                if (mousedownID==-1)
+                    mousedownID = setInterval(whilemousedown, 50 /*execute every 100ms*/)
             }
 
             function mouseup(event) {
@@ -49,6 +82,10 @@
             }
 
             function whilemousedown() {
+                if (!movement) {
+                    return false
+                }
+
                 const currentPos = camera.getAttribute('position')
                 const currentRot = camera.getAttribute('rotation')
                 const futurePos = {
@@ -66,13 +103,17 @@
 
                 switch (currentMapContent) {
                     case 'x':
-                        startNewGame()
-                        return false
                     case '1':
                         startNewGame()
                         return false
+                    case 'w':
+                        wingardiumLeviosa(Math.round(currentPos.x), Math.round(currentPos.z))
+                        map[Math.round(currentPos.x)][Math.round(currentPos.z)] = "*"
+                        return false
+                    case 'i':
+                        inferio(Math.round(currentPos.x), Math.round(currentPos.z))
+                        map[Math.round(currentPos.x)][Math.round(currentPos.z)] = "*"
                 }
-
 
                 camera.setAttribute('position', {
                     x: currentPos.x + 0.1 * Math.sin((currentRot.y - 180) * Math.PI / 180.0),
@@ -93,7 +134,6 @@
             }
 
             function createWall(type, i, j) {
-
                 const wall = document.createElement('a-box')
 
                 if(type == 'o' || type == 'g') {
@@ -125,6 +165,7 @@
 
                 wall.setAttribute('height', 4)
                 wall.setAttribute('src', '#wallTexture')
+                wall.setAttribute('id', "p"+i+'_'+j)
 
                 scene.appendChild(wall)
             }
@@ -146,6 +187,11 @@
                             elem.setAttribute('color', 'yellow')
                             scene.appendChild(elem)
                             break
+                        case 'w':
+                        case 'i':
+                            elem.setAttribute('src', '#spell')
+                            scene.appendChild(elem)
+                            break
                         case "0":
                             startingAllowed.push([i, j])
                             break
@@ -158,7 +204,7 @@
                 }
             }
             const ground = document.createElement('a-box')
-            ground.setAttribute('src', 'black')
+            ground.setAttribute('src', '#groundTexture')
             ground.setAttribute('height', 0.1)
             ground.setAttribute('position', ((map.length - 1) / 2 - 0.5) + ' 0 ' + ((map.length - 1) / 2 - 0.5) )
             ground.setAttribute('width', (map.length - 1))
