@@ -7,14 +7,23 @@
         <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
     </head>
     <body>
-        <a-scene stats >
+        <a-scene>
             <a-assets>
+                <audio id="sound" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2FThe_Maze_Harry_Potter_and_the_Goblet_of_Fire_Patrick_Doyle.mp3?1541772371408" preload="auto"></audio>
                 <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftoa-heftiba-340865-unsplash.jpg?1541689940143" />
                 <img id="groundTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879" />
                 <img id="spell" src="https://a.wattpad.com/cover/7668857-288-k560123.jpg%22%3E" />
-                <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Funtitled.147.jpg?1541677826300%22%3E"/>
-                <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fcup.obj?1541677534435%22%3E"></a-asset-item>
+                <img id="cup" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftex_0094_0.png?1541759761780"/>
+                <img id="voldi" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGZrL8HtS81EaO7VFJoFMJklSJStLxeK0Db7fBTOC5W2tWyDCr"/>
+                <a-asset-item id="cupObj" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2FTriwizardCup.obj?1541759762701"></a-asset-item>
+                <a-asset-item id="cupMtl" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2FTriwizardCup.mtl?1541761958516"></a-asset-item>
             </a-assets>
+            <a-entity id="cupPos" obj-model="obj: #cupObj; mtl: #cupMtl" src="#cup" scale="0.01 0.01 0.01"><a-animation attribute="rotation"
+                dur="5000"
+                fill="forwards"
+                to="0 360 0"
+                repeat="indefinite"></a-animation>
+            </a-entity>
             <a-camera>
                 <a-cursor>
                 </a-cursor>
@@ -45,13 +54,13 @@
                         }
                     }, 2000)
                 },
-                update: function() {
-                    console.log('test')
-                }
             })
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
+            const elemObj = document.querySelector('#cupPos')
+
+            camera.setAttribute("sound", "src: #sound; autoplay: true; volume: 0.2");
 
             function wingardiumLeviosa(x, z) {
                 const anim = document.createElement('a-animation')
@@ -145,8 +154,10 @@
 
                 switch (currentMapContent) {
                     case 'x':
+                        startNewGame('You died')
+                        return false
                     case '1':
-                        startNewGame()
+                        startNewGame('You won !')
                         return false
                     case 'w':
                         wingardiumLeviosa(Math.round(currentPos.x), Math.round(currentPos.z))
@@ -174,7 +185,10 @@
             scene.addEventListener("touchend", mouseup)
             scene.addEventListener("mouseout", mouseup)
 
-            function startNewGame(first = false) {
+            function startNewGame(message, first = false) {
+                const text = document.querySelector('a-text')
+                text.setAttribute('value', message)
+
                 const startingPos = startingAllowed[Math.floor(Math.random()*startingAllowed.length)]
                 camera.setAttribute('position', startingPos[0] + (first ? ' 0 ' : ' 1 ')  + startingPos[1])
             }
@@ -209,6 +223,13 @@
                     wall.setAttribute('position', i + ' 2 ' + j)
                 }
 
+                if (type == 'M') {
+                    const text = document.createElement('a-text')
+                    text.setAttribute('color', 'white')
+                    text.setAttribute('position', '0 -1 -3')
+                    wall.appendChild(text)
+                }
+
                 wall.setAttribute('height', 4)
                 wall.setAttribute('src', '#wallTexture')
                 wall.setAttribute('id', "p"+i+'_'+j)
@@ -227,11 +248,11 @@
                     elem.setAttribute('position', i + ' 0.1 ' + j)
                     switch (map[i][j]) {
                         case "1":
-                            elem.setAttribute('src', '#cup')
-                            scene.appendChild(elem)
+                            elemObj.setAttribute('position', i + ' 0.6 ' + j)
                             break
                         case "x":
-                            elem.setAttribute('color', 'yellow')
+                            elem.setAttribute('position', i + ' 0.01 ' + j)
+                            elem.setAttribute('src', '#voldi')
                             scene.appendChild(elem)
                             break
                         case 'w':
@@ -251,6 +272,7 @@
                         case 'o':
                         case '#':
                         case 'g':
+                        case 'M':
                             createWall(map[i][j], i, j)
                             break
                     }
@@ -265,7 +287,7 @@
             ground.setAttribute('depth', (map.length - 1))
 
             scene.appendChild(ground)
-            startNewGame(true)
+            startNewGame('Good Luck', true)
             movement = true
         </script>
     </body>
