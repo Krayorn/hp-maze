@@ -7,7 +7,7 @@
         <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
     </head>
     <body>
-        <a-scene move-click >
+        <a-scene stats >
             <a-assets>
                 <img id="wallTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Ftoa-heftiba-340865-unsplash.jpg?1541689940143" />
                 <img id="groundTexture" src="https://cdn.glitch.com/551b12a4-09a1-462a-8f00-e861c3e82645%2Fdimitri-iakymuk-107955-unsplash.jpg?1541685028879" />
@@ -26,6 +26,29 @@
             request.send()
             const map = request.responseText.split('\n')
             let movement = false
+
+            AFRAME.registerComponent('animated-wall', {
+                schema: {
+                    def: {type: 'string', default: '*'},
+                    i: {type: 'number', default: 0},
+                    j: {type: 'number', default: 0}
+                },
+                init: function () {
+                    const i = this.data.i
+                    const j = this.data.j
+                    map[i][j] = this.data.def
+                    setInterval(() => {
+                        if (map[i][j] == '*' || map[i][j] == '#') {
+                            map[i][j] = 't' + map[i][j]
+                        } else {
+                            map[i][j] = map[i][j] == 't#' ? "*" : "#"
+                        }
+                    }, 2000)
+                },
+                update: function() {
+                    console.log('test')
+                }
+            })
 
             const scene = document.querySelector('a-scene')
             const camera = document.querySelector('a-camera')
@@ -46,7 +69,7 @@
                     returnAnim.setAttribute('attribute', 'position')
                     camera.appendChild(returnAnim)
                     movement = true
-                }, 3000);
+                }, 3000)
             }
 
             function inferio(x, z) {
@@ -69,6 +92,22 @@
                 anim.setAttribute('attribute', 'position')
                 anim.setAttribute('to', toRemove[0] + ' -2 ' + toRemove[1])
                 box.appendChild(anim)
+            }
+
+            function apparating() {
+                const possiblePos = teleportationEndPoint[Math.floor(Math.random()*teleportationEndPoint.length)]
+                const anim = document.createElement('a-animation')
+                anim.setAttribute('dur', '1000')
+                anim.setAttribute('to', possiblePos[0] + ' 1 ' + possiblePos[1])
+                anim.setAttribute('attribute', 'position')
+
+                camera.appendChild(anim)
+
+                movement = false
+
+                setTimeout(() => {
+                    movement = true
+                }, 3000)
             }
 
             let mousedownID = -1
@@ -116,6 +155,10 @@
                     case 'i':
                         inferio(Math.round(currentPos.x), Math.round(currentPos.z))
                         map[Math.round(currentPos.x)][Math.round(currentPos.z)] = "*"
+                        return false
+                    case 'a':
+                        apparating()
+                        return false
                 }
 
                 camera.setAttribute('position', {
@@ -132,7 +175,7 @@
             scene.addEventListener("mouseout", mouseup)
 
             function startNewGame(first = false) {
-                const startingPos = startingAllowed[Math.floor(Math.random()*startingAllowed.length)];
+                const startingPos = startingAllowed[Math.floor(Math.random()*startingAllowed.length)]
                 camera.setAttribute('position', startingPos[0] + (first ? ' 0 ' : ' 1 ')  + startingPos[1])
             }
 
@@ -147,23 +190,16 @@
                     anim.setAttribute('repeat', 'indefinite')
                     anim.setAttribute('direction', 'alternate')
                     anim.setAttribute('delay', '2000')
+                    wall.setAttribute('animated-wall', 'def: '+ (type == 'g' ? '*' : '#') +'; i: ' +i+ '; j: '+j+';')
 
                     if (type == 'g') {
                         anim.setAttribute('from', i + ' -2 ' + j)
                         anim.setAttribute('to', i + ' 2 ' + j)
-                        map[i][j] = '#'
                     } else {
                         anim.setAttribute('from', i + ' 2 ' + j)
                         anim.setAttribute('to', i + ' -2 ' + j)
-                        map[i][j] = '*'
                     }
-                    setInterval(() => {
-                        if (map[i][j] == '*' || map[i][j] == '#') {
-                            map[i][j] = 't' + map[i][j]
-                        } else {
-                            map[i][j] = map[i][j] == 't#' ? "*" : "#"
-                        }
-                    }, 2000)
+
                     wall.appendChild(anim)
                 }
 
@@ -181,6 +217,7 @@
             }
 
             const startingAllowed = []
+            const teleportationEndPoint = []
 
             for (i in map) {
                 map[i] = map[i].split('')
@@ -199,8 +236,14 @@
                             break
                         case 'w':
                         case 'i':
+                        case 'a':
                             elem.setAttribute('src', '#spell')
                             scene.appendChild(elem)
+                            break
+                        case 'b':
+                            elem.setAttribute('color', 'grey')
+                            scene.appendChild(elem)
+                            teleportationEndPoint.push([i, j])
                             break
                         case "0":
                             startingAllowed.push([i, j])
